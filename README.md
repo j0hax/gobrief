@@ -1,4 +1,6 @@
 # gobrief
+[![Go](https://github.com/j0hax/gobrief/actions/workflows/go.yml/badge.svg)](https://github.com/j0hax/gobrief/actions/workflows/go.yml)
+
 Summarize iCal Events on the command line
 
 The purpose of this program is to provide a *simple* and *fast* way to peek upcoming events in your calendar. Think of it as an `ls` command for your agenda.
