@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/apognu/gocal"
-	"github.com/fatih/color"
+	"github.com/jwalton/gchalk"
 )
 
 func main() {
@@ -36,9 +36,9 @@ func main() {
 	c.Parse()
 
 	// Init custom formatting
-	dateCol := color.New(color.FgYellow).Add(color.Bold).SprintFunc()
-	timeCol := color.New(color.FgRed).SprintFunc()
-	eventCol := color.New(color.FgBlue).Add(color.Italic).SprintFunc()
+	dateCol := gchalk.WithBold().Yellow
+	timeCol := gchalk.Red
+	eventCol := gchalk.WithItalic().Blue
 
 	if len(c.Events) == 0 {
 		fmt.Printf("No upcoming events in the next %d days\n", *days)
