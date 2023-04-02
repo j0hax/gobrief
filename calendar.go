@@ -4,13 +4,15 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/apognu/gocal"
 	"github.com/jwalton/gchalk"
 )
 
-func fetchCal(url string, numDays int, ch chan<- gocal.Event) {
+func fetchCal(url string, numDays int, ch chan<- gocal.Event, wg *sync.WaitGroup) {
+	defer wg.Done()
 	// Grab ical
 	resp, err := http.Get(url)
 	if err != nil {
