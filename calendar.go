@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"sync"
+	"text/tabwriter"
 	"time"
 
 	"github.com/apognu/gocal"
@@ -38,14 +40,24 @@ func fetchCal(url string, numDays int, ch chan<- gocal.Event, wg *sync.WaitGroup
 
 func printCal(events []gocal.Event) {
 	// Init custom formatting
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
 	dateCol := gchalk.WithBold().Yellow
 	timeCol := gchalk.Red
 	eventCol := gchalk.WithItalic().Blue
+
 	for _, e := range events {
 		// Establish formats
-		date := e.Start.Format("Mon _2 Jan")
+		date := e.Start.Format("Mon 02 Jan")
 		time := e.Start.Format("15:04")
 
-		fmt.Printf("%s %s %s\n", dateCol(date), timeCol(time), eventCol(e.Summary))
+		// Check if the event is all-day
+		_, allday := e.RawStart.Params["VALUE"]
+		if allday {
+			time = "all-day"
+		}
+
+		fmt.Fprintf(w, "%s\t%s\t%s\n", dateCol(date), timeCol(time), eventCol(e.Summary))
 	}
+
+	w.Flush()
 }
