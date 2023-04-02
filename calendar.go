@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -9,11 +10,11 @@ import (
 	"github.com/jwalton/gchalk"
 )
 
-func fetchCal(url string, numDays int) ([]gocal.Event, error) {
+func fetchCal(url string, numDays int, ch chan<- gocal.Event) {
 	// Grab ical
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, err
+		log.Panic(err)
 	}
 
 	// Go ahead 2 days
@@ -25,10 +26,12 @@ func fetchCal(url string, numDays int) ([]gocal.Event, error) {
 
 	err = c.Parse()
 	if err != nil {
-		return nil, err
+		log.Panic(err)
 	}
 
-	return c.Events, nil
+	for _, e := range c.Events {
+		ch <- e
+	}
 }
 
 func printCal(events []gocal.Event) {
