@@ -13,18 +13,22 @@ import (
 	"github.com/jwalton/gchalk"
 )
 
+// fetchCal fetches iCal data for the specified days from a URL.
+//
+// This function is designed to run concurrently, and as such writes events
+// into a channel.
 func fetchCal(url string, numDays int, ch chan<- gocal.Event, wg *sync.WaitGroup) {
 	defer wg.Done()
-	// Grab ical
+
+	// Grab iCal
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Panic(err)
 	}
 
-	// Go ahead 2 days
+	// Look up events up to numDays from now
 	start, end := time.Now(), time.Now().AddDate(0, 0, numDays)
 
-	// Parse Ical
 	c := gocal.NewParser(resp.Body)
 	c.Start, c.End = &start, &end
 
@@ -38,6 +42,7 @@ func fetchCal(url string, numDays int, ch chan<- gocal.Event, wg *sync.WaitGroup
 	}
 }
 
+// printCal prints the list of Events to stdout using custom formatting
 func printCal(events []gocal.Event) {
 	// Init custom formatting
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)

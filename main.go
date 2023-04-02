@@ -14,7 +14,7 @@ func main() {
 	events := make([]gocal.Event, 0, 64)
 	results := make(chan gocal.Event)
 
-	// get each
+	// fetch each URL concurrently
 	var wg sync.WaitGroup
 	for _, url := range cfg.Calendars {
 		wg.Add(1)
@@ -26,6 +26,8 @@ func main() {
 		close(results)
 	}()
 
+	// Add each item to the list:
+	// The range ends when all goroutines are finished and the channel is closed.
 	for r := range results {
 		events = append(events, r)
 	}
