@@ -1,59 +1,45 @@
 package main
 
 import (
-	"flag"
-	"fmt"
 	"log"
-	"net/http"
-	"os"
-	"strings"
-	"time"
+	"sort"
+	"sync"
 
 	"github.com/apognu/gocal"
-	"github.com/jwalton/gchalk"
+	"github.com/j0hax/gobrief/config"
 )
 
 func main() {
+	cfg := config.LoadConfig()
+	events := make([]gocal.Event, 0, 64)
+	results := make(chan gocal.Event)
 
-	url := flag.String("u", "https://calendar.google.com/calendar/ical/en.german%23holiday%40group.v.calendar.google.com/public/basic.ics", "iCal URL")
-	days := flag.Int("d", 2, "Days to display")
+	// fetch each URL concurrently
+	var wg sync.WaitGroup
+	for _, url := range cfg.Calendars {
+		wg.Add(1)
+		go fetchCal(url, cfg.Days, results, &wg)
+	}
 
-	flag.Parse()
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
 
-	// Grab ical
-	resp, err := http.Get(*url)
+	// Add each item to the list:
+	// The range ends when all goroutines are finished and the channel is closed.
+	for r := range results {
+		events = append(events, r)
+	}
 
+	sort.Slice(events, func(i, j int) bool {
+		return events[i].Start.Before(*events[j].Start)
+	})
+
+	printCal(events)
+
+	err := cfg.Save()
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Go ahead 2 days
-	start, end := time.Now(), time.Now().AddDate(0, 0, *days)
-
-	// Parse Ical
-	c := gocal.NewParser(resp.Body)
-	c.Start, c.End = &start, &end
-	c.Parse()
-
-	// Init custom formatting
-	dateCol := gchalk.WithBold().Yellow
-	timeCol := gchalk.Red
-	eventCol := gchalk.WithItalic().Blue
-
-	if len(c.Events) == 0 {
-		fmt.Printf("No upcoming events in the next %d days\n", *days)
-		os.Exit(0)
-	}
-
-	for _, e := range c.Events {
-
-		// Establish formats
-		date := e.Start.Format("Mon _2 Jan")
-		time := e.Start.Format("15:04")
-
-		// Remove StudIP Spam
-		sum := strings.ReplaceAll(e.Summary, "Hauptveranst., ", "")
-
-		fmt.Printf("%s %s %s\n", dateCol(date), timeCol(time), eventCol(sum))
+		log.Panic(err)
 	}
 }
