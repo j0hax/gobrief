@@ -12,7 +12,7 @@ import (
 func main() {
 	cfg := config.LoadConfig()
 	events := make([]gocal.Event, 0, 64)
-	results := make(chan gocal.Event)
+	results := make(chan gocal.Event, len(cfg.Calendars))
 
 	// fetch each URL concurrently
 	var wg sync.WaitGroup
