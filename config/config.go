@@ -9,25 +9,20 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
-// The base name of gobrief's configuration file
-const configFileName = "config.toml"
-
-// configuration allows for saving program configuration and settings
-type configuration struct {
-	Days      int               `comment:"Days to show in advance"`
+// Configuration allows for saving program Configuration and settings
+type Configuration struct {
 	Calendars map[string]string `comment:"List of calendars"`
 }
 
 // new returns a default configuration struct
-func new() *configuration {
-	return &configuration{
-		Days:      7,
+func new() *Configuration {
+	return &Configuration{
 		Calendars: map[string]string{},
 	}
 }
 
 // Save writes the configuration to disk
-func (s *configuration) Save() error {
+func (s *Configuration) Save() error {
 	file, err := getSettingsFile()
 	if err != nil {
 		return err
@@ -46,6 +41,19 @@ func (s *configuration) Save() error {
 	return nil
 }
 
+// SaveExit is an equivalent to Save(),
+// followed by os.Exit(0) if no error occurs.
+//
+// If an error occurs, log.Fatal is called.
+func (s *Configuration) SaveExit() {
+	err := s.Save()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	os.Exit(0)
+}
+
 // getSettingsFile returns the path of mz's cache file.
 // The file and its parent directories may not exist.
 func getSettingsFile() (string, error) {
@@ -61,7 +69,7 @@ func getSettingsFile() (string, error) {
 		return "", err
 	}
 
-	configPath := filepath.Join(folder, configFileName)
+	configPath := filepath.Join(folder, "config.toml")
 
 	return configPath, nil
 }
@@ -69,7 +77,7 @@ func getSettingsFile() (string, error) {
 // LoadConfig attempts to load the existing configuration file.
 // If an error occurs (i.e. the configuration file does not exist)
 // a default configuration object is returned.
-func LoadConfig() *configuration {
+func LoadConfig() *Configuration {
 	s := new()
 
 	file, err := getSettingsFile()

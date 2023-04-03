@@ -1,20 +1,48 @@
 package main
 
 import (
-	"log"
+	"flag"
+	"fmt"
+	"os"
 
 	"github.com/j0hax/gobrief/config"
 )
 
+func customUsage() {
+	out := flag.CommandLine.Output()
+	fmt.Fprintf(out, "Usage: %s [CALENDAR]\n", os.Args[0])
+	flag.PrintDefaults()
+}
+
 func main() {
+	flag.Usage = customUsage
+	list := flag.Bool("list", false, "list calendars")
+	add := flag.Bool("add", false, "add calendar sources in the pattern [NAME] [URL]")
+	del := flag.Bool("del", false, "remove calender by [NAME]")
+	nDays := flag.Int("days", 7, "number of days to look ahead")
+	flag.Parse()
+
 	cfg := config.LoadConfig()
 
-	events := Fetch(cfg.Days, cfg.Calendars)
+	if *list {
+		out := flag.CommandLine.Output()
+		cfg.ListCalendars(out)
+		os.Exit(0)
+	}
+
+	if *add {
+		cfg.AddCalendar(flag.Args()...)
+		cfg.SaveExit()
+	} else if *del {
+		cfg.DeleteCalendar(flag.Args()...)
+		cfg.SaveExit()
+	}
+
+	if len(flag.Args()) > 0 {
+		cfg.SelectCalendars(flag.Args()...)
+	}
+
+	events := Fetch(*nDays, cfg.Calendars)
 
 	printCal(events)
-
-	err := cfg.Save()
-	if err != nil {
-		log.Panic(err)
-	}
 }
