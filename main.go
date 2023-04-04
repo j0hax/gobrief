@@ -1,45 +1,48 @@
 package main
 
 import (
-	"log"
-	"sort"
-	"sync"
+	"flag"
+	"fmt"
+	"os"
 
-	"github.com/apognu/gocal"
 	"github.com/j0hax/gobrief/config"
 )
 
+func customUsage() {
+	out := flag.CommandLine.Output()
+	fmt.Fprintf(out, "Usage: %s [CALENDAR]\n", os.Args[0])
+	flag.PrintDefaults()
+}
+
 func main() {
 	cfg := config.LoadConfig()
-	events := make([]gocal.Event, 0, 64)
-	results := make(chan gocal.Event)
 
-	// fetch each URL concurrently
-	var wg sync.WaitGroup
-	for _, url := range cfg.Calendars {
-		wg.Add(1)
-		go fetchCal(url, cfg.Days, results, &wg)
+	flag.Usage = customUsage
+	list := flag.Bool("list", false, "list calendars")
+	add := flag.Bool("add", false, "add calendar sources in the pattern [NAME] [URL]")
+	del := flag.Bool("del", false, "remove calender by [NAME]")
+	nDays := flag.Int("days", cfg.Days, "number of days to look ahead")
+	flag.Parse()
+
+	if *list {
+		out := flag.CommandLine.Output()
+		cfg.ListCalendars(out)
+		os.Exit(0)
 	}
 
-	go func() {
-		wg.Wait()
-		close(results)
-	}()
-
-	// Add each item to the list:
-	// The range ends when all goroutines are finished and the channel is closed.
-	for r := range results {
-		events = append(events, r)
+	if *add {
+		cfg.AddCalendar(flag.Args()...)
+		cfg.SaveExit()
+	} else if *del {
+		cfg.DeleteCalendar(flag.Args()...)
+		cfg.SaveExit()
 	}
 
-	sort.Slice(events, func(i, j int) bool {
-		return events[i].Start.Before(*events[j].Start)
-	})
+	if len(flag.Args()) > 0 {
+		cfg.SelectCalendars(flag.Args()...)
+	}
+
+	events := Fetch(*nDays, cfg.Calendars)
 
 	printCal(events)
-
-	err := cfg.Save()
-	if err != nil {
-		log.Panic(err)
-	}
 }
