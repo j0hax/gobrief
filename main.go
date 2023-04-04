@@ -15,14 +15,14 @@ func customUsage() {
 }
 
 func main() {
+	cfg := config.LoadConfig()
+
 	flag.Usage = customUsage
 	list := flag.Bool("list", false, "list calendars")
 	add := flag.Bool("add", false, "add calendar sources in the pattern [NAME] [URL]")
 	del := flag.Bool("del", false, "remove calender by [NAME]")
-	nDays := flag.Int("days", 7, "number of days to look ahead")
+	nDays := flag.Int("days", cfg.Days, "number of days to look ahead")
 	flag.Parse()
-
-	cfg := config.LoadConfig()
 
 	if *list {
 		out := flag.CommandLine.Output()

@@ -9,15 +9,23 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
+type Calendar struct {
+	Name     string
+	URL      string
+	Priority int
+}
+
 // Configuration allows for saving program Configuration and settings
 type Configuration struct {
-	Calendars map[string]string `comment:"List of calendars"`
+	Days      int        `comment:"Upcoming days to show"`
+	Calendars []Calendar `comment:"List of calendars"`
 }
 
 // new returns a default configuration struct
 func new() *Configuration {
 	return &Configuration{
-		Calendars: map[string]string{},
+		Days:      7,
+		Calendars: []Calendar{},
 	}
 }
 

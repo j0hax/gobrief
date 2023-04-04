@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/url"
 	"text/tabwriter"
+
+	"golang.org/x/exp/slices"
 )
 
 // ListCalendars prints the list of calendars in the configuration
@@ -13,8 +15,8 @@ import (
 func (cfg *Configuration) ListCalendars(out io.Writer) {
 	w := tabwriter.NewWriter(out, 0, 0, 1, ' ', 0)
 
-	for i, j := range cfg.Calendars {
-		fmt.Fprintf(w, "%s\t%s\t\n", i, j)
+	for _, j := range cfg.Calendars {
+		fmt.Fprintf(w, "%s\t%s\t\n", j.Name, j.URL)
 	}
 
 	w.Flush()
@@ -33,7 +35,9 @@ func (cfg *Configuration) AddCalendar(args ...string) {
 	for i := 0; i < len(args)-1; i += 2 {
 		k := args[i]
 		v := args[i+1]
-		cfg.Calendars[k] = v
+
+		item := Calendar{Name: k, URL: v}
+		cfg.Calendars = append(cfg.Calendars, item)
 		log.Printf("Saved calendar as '%s'\n", k)
 	}
 }
@@ -43,10 +47,10 @@ func (cfg *Configuration) AddCalendar(args ...string) {
 // It expects calendar names to be passed via args
 func (cfg *Configuration) DeleteCalendar(args ...string) {
 	for _, name := range args {
-		for key := range cfg.Calendars {
-			if name == key {
-				delete(cfg.Calendars, key)
-				log.Printf("Deleted calendar '%s'\n", key)
+		for i, cal := range cfg.Calendars {
+			if name == cal.Name {
+				cfg.Calendars = append(cfg.Calendars[:i], cfg.Calendars[i+1:]...)
+				log.Printf("Deleted calendar '%s'\n", name)
 				break
 			}
 		}
@@ -61,22 +65,29 @@ func (cfg *Configuration) DeleteCalendar(args ...string) {
 //
 // All other calendars will be filtered from the configuration.
 func (cfg *Configuration) SelectCalendars(args ...string) {
-	newCalendars := make(map[string]string)
+	newCalendars := make([]Calendar, len(args))
 
-	// Check if the item is a URL
 	for i, arg := range args {
-		value, ok := cfg.Calendars[arg]
-		if ok {
-			newCalendars[arg] = value
+		// Search for calendar with matching name
+		idx := slices.IndexFunc(cfg.Calendars, func(c Calendar) bool {
+			return c.Name == arg
+		})
+
+		// If the calendar exists, append it.
+		// Otherwise, parse the URL
+		if idx >= 0 {
+			newCalendars = append(newCalendars, cfg.Calendars[idx])
 		} else {
 			value, err := url.ParseRequestURI(arg)
-			if err == nil {
-				name := fmt.Sprintf("url%d", i)
-				newCalendars[name] = value.String()
-				break
-			} else {
+			if err != nil {
 				log.Printf("Neither a configured calendar nor valid URL: '%s'\n", arg)
+				break
 			}
+			cal := Calendar{
+				Name: fmt.Sprintf("URL%d", i),
+				URL:  value.String(),
+			}
+			newCalendars = append(newCalendars, cal)
 		}
 	}
 

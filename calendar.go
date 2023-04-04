@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/apognu/gocal"
+	"github.com/j0hax/gobrief/config"
 	"github.com/jwalton/gchalk"
 )
 
@@ -23,15 +24,15 @@ type Entry struct {
 // Fetch concurrenctly fetches iCal events from a map of calendar names and source URLs
 //
 // The returned list of events is sorted by date.
-func Fetch(days int, urls map[string]string) []Entry {
+func Fetch(days int, cals []config.Calendar) []Entry {
 	events := make([]Entry, 0, 64)
-	results := make(chan Entry, len(urls))
+	results := make(chan Entry, len(cals))
 
 	// fetch each URL concurrently
 	var wg sync.WaitGroup
-	for name, url := range urls {
+	for _, cal := range cals {
 		wg.Add(1)
-		go fetchCal(name, url, days, results, &wg)
+		go fetchCal(cal.Name, cal.URL, days, results, &wg)
 	}
 
 	go func() {
