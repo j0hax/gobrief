@@ -1,5 +1,6 @@
 # gobrief
 [![Go](https://github.com/j0hax/gobrief/actions/workflows/go.yml/badge.svg)](https://github.com/j0hax/gobrief/actions/workflows/go.yml)
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/j0hax/gobrief)
 
 Summarize iCal Events on the command line
 
