@@ -31,22 +31,14 @@ func new() *Configuration {
 
 // Save writes the configuration to disk
 func (s *Configuration) Save() error {
-	file, err := getSettingsFile()
+	file, err := openSettingsFile()
 	if err != nil {
 		return err
 	}
 
-	dat, err := toml.Marshal(s)
-	if err != nil {
-		return err
-	}
+	enc := toml.NewEncoder(file)
 
-	err = os.WriteFile(file, dat, 0644)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return enc.Encode(s)
 }
 
 // SaveExit is an equivalent to Save(),
@@ -62,24 +54,23 @@ func (s *Configuration) SaveExit() {
 	os.Exit(0)
 }
 
-// getSettingsFile returns the path of mz's cache file.
-// The file and its parent directories may not exist.
-func getSettingsFile() (string, error) {
+// openSettingsFile returns a file handler to the configuration file.
+func openSettingsFile() (*os.File, error) {
 	configDir, err := os.UserConfigDir()
-	if err != nil && !os.IsExist(err) {
-		return "", err
+	if err != nil {
+		return nil, err
 	}
 
 	folder := filepath.Join(configDir, "gobrief")
 
 	err = os.MkdirAll(folder, 0755)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	configPath := filepath.Join(folder, "config.toml")
 
-	return configPath, nil
+	return os.OpenFile(configPath, os.O_RDWR|os.O_CREATE, 0755)
 }
 
 // LoadConfig attempts to load the existing configuration file.
@@ -88,23 +79,18 @@ func getSettingsFile() (string, error) {
 func LoadConfig() *Configuration {
 	s := new()
 
-	file, err := getSettingsFile()
+	file, err := openSettingsFile()
 	if err != nil {
 		log.Println(err)
 		return s
 	}
 
-	dat, err := os.ReadFile(file)
+	dec := toml.NewDecoder(file)
 	if err != nil {
 		log.Println(err)
 		return s
 	}
 
-	err = toml.Unmarshal(dat, &s)
-	if err != nil {
-		log.Println(err)
-		return s
-	}
-
+	err = dec.Decode(&s)
 	return s
 }
