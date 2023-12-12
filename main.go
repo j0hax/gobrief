@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/j0hax/gobrief/agenda"
 	"github.com/j0hax/gobrief/config"
 )
 
@@ -42,7 +43,6 @@ func main() {
 		cfg.SelectCalendars(flag.Args()...)
 	}
 
-	events := Fetch(*nDays, cfg.Calendars)
-
-	printCal(events)
+	a := agenda.NewAgenda(*nDays, cfg.Calendars)
+	a.PrintCal()
 }
