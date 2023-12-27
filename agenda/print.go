@@ -2,7 +2,7 @@ package agenda
 
 import (
 	"fmt"
-	"os"
+	"io"
 	"text/tabwriter"
 
 	"github.com/jwalton/gchalk"
@@ -13,14 +13,16 @@ var timeCol = gchalk.Red
 var calCol = gchalk.Blue
 var eventCol = gchalk.WithItalic().Green
 
-// printCal prints the list of Events to stdout using custom formatting
-func (h *EventHeap) PrintCal() {
+// PrettyPrint prints the list of Events to output using custom formatting
+func (h *Agenda) PrettyPrint(output io.Writer) {
 	// Init custom formatting
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
+	w := tabwriter.NewWriter(output, 0, 0, 1, ' ', 0)
 
-	for h.Len() > 0 {
-		event := h.Pop().(EventEntry)
+	// Ensure our queue is not modified
+	h.mu.Lock()
+	defer h.mu.Unlock()
 
+	for _, event := range h.queue {
 		// Establish formats
 		date := event.Start.Format("Mon 02 Jan")
 

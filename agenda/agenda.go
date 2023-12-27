@@ -8,10 +8,10 @@ import (
 )
 
 // NewAgenda fetches the specified calendars into a sorted list
-func NewAgenda(daysAhead int, cals []config.Calendar) *EventHeap {
+func NewAgenda(daysAhead int, cals []config.Calendar) *Agenda {
 	var wg sync.WaitGroup
 
-	h := &EventHeap{}
+	h := &Agenda{}
 
 	heap.Init(h)
 

@@ -12,37 +12,37 @@ type EventEntry struct {
 	CalendarName string
 }
 
-// EventHeap is a minheap of calendar events.
-type EventHeap struct {
+// Agenda is a minheap of calendar events.
+type Agenda struct {
 	queue []EventEntry
 	mu    sync.Mutex
 }
 
-func (el *EventHeap) Len() int {
+func (el *Agenda) Len() int {
 	el.mu.Lock()
 	defer el.mu.Unlock()
 	return len(el.queue)
 }
 
-func (el *EventHeap) Less(i, j int) bool {
+func (el *Agenda) Less(i, j int) bool {
 	el.mu.Lock()
 	defer el.mu.Unlock()
 	return el.queue[i].Start.Before(*el.queue[j].Start)
 }
 
-func (el *EventHeap) Swap(i, j int) {
+func (el *Agenda) Swap(i, j int) {
 	el.mu.Lock()
 	defer el.mu.Unlock()
 	el.queue[j], el.queue[i] = el.queue[i], el.queue[j]
 }
 
-func (el *EventHeap) Push(x any) {
+func (el *Agenda) Push(x any) {
 	el.mu.Lock()
 	defer el.mu.Unlock()
 	el.queue = append(el.queue, x.(EventEntry))
 }
 
-func (el *EventHeap) Pop() any {
+func (el *Agenda) Pop() any {
 	el.mu.Lock()
 	defer el.mu.Unlock()
 	old := el.queue

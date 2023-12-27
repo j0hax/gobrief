@@ -44,5 +44,5 @@ func main() {
 	}
 
 	a := agenda.NewAgenda(*nDays, cfg.Calendars)
-	a.PrintCal()
+	a.PrettyPrint(os.Stdout)
 }
