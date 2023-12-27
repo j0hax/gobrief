@@ -14,11 +14,13 @@ var calCol = gchalk.Blue
 var eventCol = gchalk.WithItalic().Green
 
 // printCal prints the list of Events to stdout using custom formatting
-func (a Agenda) PrintCal() {
+func (h *EventHeap) PrintCal() {
 	// Init custom formatting
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
 
-	for _, event := range a.Sorted() {
+	for h.Len() > 0 {
+		event := h.Pop().(EventEntry)
+
 		// Establish formats
 		date := event.Start.Format("Mon 02 Jan")
 

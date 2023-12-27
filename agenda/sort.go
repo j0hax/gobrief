@@ -1,36 +1,53 @@
 package agenda
 
 import (
-	"slices"
+	"sync"
 
 	"github.com/apognu/gocal"
 )
 
 // EventEntry wraps gocal.Event and includes a CalendarName field
-// in order to make sorting and ranging a map of event slices much easier.
 type EventEntry struct {
 	gocal.Event
 	CalendarName string
 }
 
-// Sorted returns the events of an Agenda in a sorted order.
-func (a Agenda) Sorted() []EventEntry {
-	var allEvents []EventEntry
+// EventHeap is a minheap of calendar events.
+type EventHeap struct {
+	queue []EventEntry
+	mu    sync.Mutex
+}
 
-	// Append all items from map to a slice
-	for name, events := range a {
-		for _, event := range events {
-			allEvents = append(allEvents, EventEntry{
-				Event:        event,
-				CalendarName: name,
-			})
-		}
-	}
+func (el *EventHeap) Len() int {
+	el.mu.Lock()
+	defer el.mu.Unlock()
+	return len(el.queue)
+}
 
-	// Sort the slice
-	slices.SortFunc(allEvents, func(a, b EventEntry) int {
-		return a.Start.Compare(*b.Start)
-	})
+func (el *EventHeap) Less(i, j int) bool {
+	el.mu.Lock()
+	defer el.mu.Unlock()
+	return el.queue[i].Start.Before(*el.queue[j].Start)
+}
 
-	return allEvents
+func (el *EventHeap) Swap(i, j int) {
+	el.mu.Lock()
+	defer el.mu.Unlock()
+	el.queue[j], el.queue[i] = el.queue[i], el.queue[j]
+}
+
+func (el *EventHeap) Push(x any) {
+	el.mu.Lock()
+	defer el.mu.Unlock()
+	el.queue = append(el.queue, x.(EventEntry))
+}
+
+func (el *EventHeap) Pop() any {
+	el.mu.Lock()
+	defer el.mu.Unlock()
+	old := el.queue
+	n := len(old)
+	x := old[n-1]
+	el.queue = old[0 : n-1]
+	return x
 }
