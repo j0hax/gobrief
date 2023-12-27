@@ -8,24 +8,24 @@ import (
 )
 
 // NewAgenda fetches the specified calendars into a sorted list
-func NewAgenda(daysAhead int, cals []config.Calendar) *Agenda {
+func NewAgenda(cfg *config.Configuration) *Agenda {
 	var wg sync.WaitGroup
 
 	h := &Agenda{}
 
 	heap.Init(h)
 
-	for _, cal := range cals {
+	for _, cal := range cfg.Calendars {
 		wg.Add(1)
-		go func(calName, url string, days int) {
+		go func(cal config.Calendar, days int) {
 			defer wg.Done()
-			for _, event := range fetchCal(url, days) {
+			for _, event := range fetchCal(cal.URL, days) {
 				heap.Push(h, EventEntry{
-					Event:        event,
-					CalendarName: calName,
+					Event:    event,
+					Calendar: &cal,
 				})
 			}
-		}(cal.Name, cal.URL, daysAhead)
+		}(cal, cfg.Days)
 	}
 	wg.Wait()
 

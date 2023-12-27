@@ -43,6 +43,8 @@ func main() {
 		cfg.SelectCalendars(flag.Args()...)
 	}
 
-	a := agenda.NewAgenda(*nDays, cfg.Calendars)
+	cfg.Days = *nDays
+
+	a := agenda.NewAgenda(cfg)
 	a.PrettyPrint(os.Stdout)
 }
