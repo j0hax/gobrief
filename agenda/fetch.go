@@ -3,7 +3,6 @@ package agenda
 import (
 	"log"
 	"net/http"
-	"sort"
 	"time"
 
 	"github.com/apognu/gocal"
@@ -25,13 +24,6 @@ func fetchCal(url string, numDays int) []gocal.Event {
 	if err != nil {
 		log.Panic(err)
 	}
-
-	// Sort all events in the calendar
-	sort.Slice(c.Events, func(i, j int) bool {
-		iStart := c.Events[i].Start
-		jStart := c.Events[j].Start
-		return iStart.Before(*jStart)
-	})
 
 	return c.Events
 }
