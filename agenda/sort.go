@@ -4,15 +4,16 @@ import (
 	"sync"
 
 	"github.com/apognu/gocal"
+	"github.com/j0hax/gobrief/config"
 )
 
 // EventEntry wraps gocal.Event and includes a CalendarName field
 type EventEntry struct {
 	gocal.Event
-	CalendarName string
+	Calendar *config.Calendar
 }
 
-// Agenda is a minheap of calendar events.
+// Agenda is a thread-safe minheap of calendar events.
 type Agenda struct {
 	queue []EventEntry
 	mu    sync.RWMutex

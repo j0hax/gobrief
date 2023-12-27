@@ -1,6 +1,7 @@
 package agenda
 
 import (
+	"container/heap"
 	"fmt"
 	"io"
 	"text/tabwriter"
@@ -18,12 +19,8 @@ func (h *Agenda) PrettyPrint(output io.Writer) {
 	// Init custom formatting
 	w := tabwriter.NewWriter(output, 0, 0, 1, ' ', 0)
 
-	// Ensure our queue is not modified
-	h.mu.RLock()
-	defer h.mu.RUnlock()
-
-	for _, event := range h.queue {
-		// Establish formats
+	for h.Len() > 0 {
+		event := heap.Pop(h).(EventEntry)
 		date := event.Start.Format("Mon 02 Jan")
 
 		var duration string
@@ -37,7 +34,7 @@ func (h *Agenda) PrettyPrint(output io.Writer) {
 			duration = fmt.Sprintf("%s - %s", start, end)
 		}
 
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t\n", dateCol(date), timeCol(duration), calCol(event.CalendarName), eventCol(event.Summary))
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t\n", dateCol(date), timeCol(duration), calCol(event.Calendar.Name), eventCol(event.Summary))
 	}
 
 	w.Flush()
