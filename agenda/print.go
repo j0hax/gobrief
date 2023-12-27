@@ -19,8 +19,8 @@ func (h *Agenda) PrettyPrint(output io.Writer) {
 	w := tabwriter.NewWriter(output, 0, 0, 1, ' ', 0)
 
 	// Ensure our queue is not modified
-	h.mu.Lock()
-	defer h.mu.Unlock()
+	h.mu.RLock()
+	defer h.mu.RUnlock()
 
 	for _, event := range h.queue {
 		// Establish formats

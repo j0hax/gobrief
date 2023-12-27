@@ -15,18 +15,18 @@ type EventEntry struct {
 // Agenda is a minheap of calendar events.
 type Agenda struct {
 	queue []EventEntry
-	mu    sync.Mutex
+	mu    sync.RWMutex
 }
 
 func (el *Agenda) Len() int {
-	el.mu.Lock()
-	defer el.mu.Unlock()
+	el.mu.RLock()
+	defer el.mu.RUnlock()
 	return len(el.queue)
 }
 
 func (el *Agenda) Less(i, j int) bool {
-	el.mu.Lock()
-	defer el.mu.Unlock()
+	el.mu.RLock()
+	defer el.mu.RUnlock()
 	return el.queue[i].Start.Before(*el.queue[j].Start)
 }
 
